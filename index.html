@@ -867,6 +867,11 @@
                 <div class="contact-title">Get Your Free Quote</div>
                 
                 <form action="https://formspree.io/f/xldoyygj" method="POST" style="margin-top: 30px;">
+    <!-- Honeypot field to deter bots -->
+    <input type="text" name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;opacity:0;" aria-hidden="true">
+    <!-- Form status message -->
+    <p id="form-status" style="display:none;margin-top:10px;"></p>
+
                     <div style="margin-bottom: 20px; text-align: left;">
                         <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.95rem;">Name *</label>
                         <input type="text" name="name" required style="width: 100%; padding: 14px 16px; border: 2px solid rgba(255,255,255,0.2); border-radius: 10px; font-size: 1rem; background: rgba(255,255,255,0.1); color: white; font-family: inherit;">
@@ -1014,6 +1019,51 @@
             }
         }
     </script>
+
+
+<script>
+// Smooth scroll for in-page anchors
+document.addEventListener('click', function(e){
+  const a = e.target.closest('a[href^="#"]');
+  if(!a) return;
+  const id = a.getAttribute('href').slice(1);
+  const el = document.getElementById(id);
+  if(el){
+    e.preventDefault();
+    el.scrollIntoView({behavior:'smooth'});
+  }
+});
+
+// Formspree async submit with honeypot + inline success
+(function(){
+  const form = document.getElementById('contact-form');
+  if(!form) return;
+  form.addEventListener('submit', async function(e){
+    e.preventDefault();
+    const status = document.getElementById('form-status');
+    if (form.website && form.website.value.trim() !== '') {
+      return; // bot detected
+    }
+    const btn = form.querySelector('button[type="submit"], .submit-btn');
+    if(btn){ btn.disabled = true; btn.textContent = 'Sending...'; }
+    try {
+      const data = new FormData(form);
+      const resp = await fetch(form.action, { method: 'POST', body: data, headers: { 'Accept': 'application/json' } });
+      if (resp.ok) {
+        if(status){ status.style.display='block'; status.style.color='#198754'; status.textContent='Thanks! I'll text you back shortly.'; }
+        form.reset();
+      } else {
+        const err = await resp.json().catch(()=>({}));
+        if(status){ status.style.display='block'; status.style.color='#dc3545'; status.textContent= err && err.error ? err.error : 'Something went wrong. Try again or text me directly.'; }
+      }
+    } catch (err){
+      if(status){ status.style.display='block'; status.style.color='#dc3545'; status.textContent='Network error. Try again or text me directly.'; }
+    } finally {
+      if(btn){ btn.disabled = false; btn.textContent = btn.getAttribute('data-label') || 'Send'; }
+    }
+  });
+})();
+</script>
 
 </body>
 </html>
